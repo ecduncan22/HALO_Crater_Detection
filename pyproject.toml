@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "halo-craters"
+version = "0.1.0"
+description = "Crater detection on VHR (SkySat, Vantor) imagery with trained U-Net models"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+    "tensorflow-cpu==2.15.1",   # Keras 2: loads the legacy Keras-2.4 .h5 models
+    "numpy<2",
+    "rasterio>=1.3",
+    "geopandas>=0.14",
+    "pyogrio",
+    "shapely>=2",
+    "scipy",
+    "pyyaml",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+s3 = ["boto3"]
+dev = ["pytest"]
+
+[project.scripts]
+halo-craters = "halo_craters.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,23 @@
+# Model registry.
+# Weights are NOT stored in git. `path` is relative to the repo root (models/ is gitignored)
+# or absolute. `sha256` identifies the exact original weights file.
+#
+# input_bands: the order of bands the model expects, by NAME. Each sensor in
+# sensors.yaml maps band names to 1-based band indices in its files.
+
+vantor_2022:
+  path: models/2022_crater_model.h5
+  sha256: e3ce27b7dd929b569f301a3b205bf13b46201091f0ae9bcdf59d1446b6e6a916  # original file (with optimizer state)
+  trained_on: "WorldView 2014 pansharpened, Z:/2014_Imagery_Reprocessing/2010/RGB (uint8, 0.324 m, UTM 37N)"
+  # Training files store bands as Blue, Green, Red and the training code fed file order.
+  input_bands: [blue, green, red]
+  native_gsd_m: 0.324
+  tile_size: 256
+
+skysat:
+  path: models/skysat_model.h5   # not yet provided
+  sha256: null
+  trained_on: "TBD"
+  input_bands: [red, green, blue]   # TBD: verify against its training imagery
+  native_gsd_m: null
+  tile_size: 256

@@ -1,0 +1,15 @@
+# Default run settings. Any key can be overridden from the command line.
+
+tile_size: 256          # fixed by the model
+stride: 192             # < tile_size gives overlap; tile centres are kept ("center" merge)
+edge_mode: shift        # shift: last tile aligned to the image edge | pad: zero-pad (original notebook)
+mask_nodata: true       # exclude nodata pixels from per-tile mean/std (original notebook: false)
+rescale: none           # none | percentile: scene-level 2-98% stretch to 0-255 (8-bit-like)
+target_gsd_m: null      # resample input to this pixel size before inference (null = native)
+batch_size: 8
+threshold: 0.5          # probability threshold for crater pixels
+min_area_m2: 0.0        # drop polygons smaller than this
+polygon_strip_rows: 4096   # rows per strip when polygonizing large scenes
+polygon_strip_overlap: 512 # must exceed the largest crater (pixels)
+write_probability: true # keep the probability GeoTIFF (uint8, 0-255)
+vector_formats: [gpkg, shp]
