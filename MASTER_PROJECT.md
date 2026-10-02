@@ -9,7 +9,7 @@
 | **Owner** | Erik Duncan |
 | **Started** | 2026-10-02 |
 | **Last updated** | 2026-10-02 |
-| **Current phase** | Phase 1 done; Phase 6 evaluation under way (GT_2 full-res Vantor). Next: tile-offset/flip ensembling, masking |
+| **Current phase** | Phase 6 evaluation under way. Now: full P001 scene on Erik's GPU. Next: ensembling, VM |
 
 ---
 
@@ -36,7 +36,7 @@ Build a repo that:
 | 2 | Sensor-specific preprocessing (band maps, resolution matching, nodata) | 🟡 Band maps and resampling built; per-sensor defaults to be decided from evaluation |
 | 3 | Stable, scalable full-scene inference (streaming, overlap, **tile-offset/flip ensembling**) | 🟡 Streaming + overlap built; ensembling next |
 | 4 | Post-processing and shapefile/GeoPackage output | 🟢 Built (strip-wise polygonize, attributes) |
-| 5 | Run on the two test scenes (visual check) | ⚪ Not started (scenes located; Vantor scene needs a bigger machine) |
+| 5 | Run on the two test scenes + full GT_2 P001 (visual check) | 🟡 GPU route ready (`scripts/windows/`); P001 full-scene run pending on Erik's workstation |
 | 6 | Evaluation on validation samples; SkySat model vs. Vantor model | 🟡 Strata-4 sample 14494 + 4 windows of GT_2 P001 (full-res Vantor) evaluated |
 | 7 | Cloud: VM provisioning, S3 read/write, batch runs | ⚪ Not started |
 | 8 | Dashboard | ⚪ Not started |
@@ -53,13 +53,13 @@ Legend: ⚪ not started · 🟡 in progress · 🟢 done · 🔴 blocked
 | Training labels | `Z:\2014_Thesis\Training_Shapefiles\Crater_Labels.shp` | 18,472 crater polygons, EPSG:32637. Equivalent diameter: median **9.4 m**, 5–95% **4.8–17.1 m**, 99% 21 m |
 | Training imagery | `Z:\2014_Imagery_Reprocessing\2010\RGB` | WorldView, 2014-09-05, pansharpened, **uint8, 3 bands stored B,G,R, 0.324 m**, 16384² tiles, UTM 37N |
 | Validation samples (all strata) | `Z:\Full_Ukraine_Project\Master_Validation_2023\Validation_Samples_2024` | Strata 1–4 + test. Network drive is slow. |
-| Validation Strata 4 (local copy) | `C:\Projects\UMD\HALO_2026\GT\val_samples_2024\strata_4` | 15 samples. Each has: AOI polygon (1 km²), clipped images (Vantor 2022, **uint16, R,G,B, 0.5 m**), `_detected_craters.shp` (original model output, after post-processing, **union of several acquisitions**), `_marked_craters.shp` (**GT**), `_crater_location_points.shp` |
-| **GT_2 (full-res Vantor)** | `C:\Projects\UMD\HALO_2026\GT\GT_2` | `imagery/22AUG01081633-…_P001_pansharpened_RGB.tif` (**uint16, R,G,B, 0.25 m**, 74700×64712 px, 38.7 GB, strip layout, ~300 km²) and `…_P007_…` (uploading). `shp/Craters.shp`: 10,314 GT polygons (9,978 inside P001), EPSG:32637, median diameter 8.8 m (5–95%: 3.8–16 m) |
+| Validation Strata 4 (local copy) | `C:\Projects\UMD\HALO_2026\GT\val_samples_2024\strata_4` | 15 samples. Each has: AOI polygon (1 km²), clipped images (Vantor 2022, **uint16, B,G,R, 0.5 m**), `_detected_craters.shp` (original model output, after post-processing, **union of several acquisitions**), `_marked_craters.shp` (**GT**), `_crater_location_points.shp` |
+| **GT_2 (full-res Vantor)** | `C:\Projects\UMD\HALO_2026\GT\GT_2` | `imagery/22AUG01081633-…_P001_pansharpened_RGB.tif` (**uint16, B,G,R, 0.25 m**, 74700×64712 px, 38.7 GB, strip layout, ~300 km²) and `…_P007_…` (uploading). `shp/Craters.shp`: 10,314 GT polygons (9,978 inside P001), EPSG:32637, median diameter 8.8 m (5–95%: 3.8–16 m) |
 | Other GT | `C:\Projects\UMD\HALO_2026\GT\GT_1` | `MC_In_Grid.shp` + six 2014 reference images (6.9 GB). Not yet used. |
 | **Model: `vantor_2022`** | `C:\Projects\UMD\HALO_2026\models\2022_crater_model.h5` | Trained **only on the 2014 `2010\RGB` imagery** (confirmed by Erik). 415 MB (with optimizer state). SHA-256 `e3ce27b7…a916` |
 | Model: SkySat | n/a | ⏳ To be provided |
-| Test scene: SkySat | `C:\Projects\UMD\HALO_2026\data\skysat_scene\pansharpened_udm2\20220702_074811_ssc12_u0001_pansharpened.tif` | 2022-07-02, **uint16, 4 bands stored B,G,R,NIR** (file tags wrongly say R,G,B), **0.5 m**, 13637×32405 px, tiled + overviews, 1.1 GB |
-| Test scene: Vantor | `C:\Projects\UMD\HALO_2026\data\vantor_scene\22SEP08082313-M1BS-506895608030_01_P004_pansharpened_RGB.tif` | 2022-09-08, **uint16, R,G,B, 0.25 m**, 73155×70455 px, **39 GB, strip layout (1 row/strip)** |
+| Test scene: SkySat | `C:\Projects\UMD\HALO_2026\data\skysat_scene\pansharpened_udm2\20220702_074811_ssc12_u0001_pansharpened.tif` | 2022-07-02, **uint16, 4 bands, B,G,R,NIR** (Planet standard order; file tags say R,G,B; to confirm), **0.5 m**, 13637×32405 px, tiled + overviews, 1.1 GB |
+| Test scene: Vantor | `C:\Projects\UMD\HALO_2026\data\vantor_scene\22SEP08082313-M1BS-506895608030_01_P004_pansharpened_RGB.tif` | 2022-09-08, **uint16, B,G,R, 0.25 m**, 73155×70455 px, **39 GB, strip layout (1 row/strip)** |
 
 **Rule:** imagery, model weights and outputs never go into git (see `.gitignore`). The repo holds code, configs and docs only.
 
@@ -84,7 +84,7 @@ Reconstructed from the original code (`oldcore/` is what training imported), the
 
 | Step | Training / original inference | What we do |
 |---|---|---|
-| **Bands** | Training fed **file order** of the training imagery, which is **Blue, Green, Red** (verified with true-colour quicklooks). | `configs/models.yaml` declares `input_bands: [blue, green, red]`; `configs/sensors.yaml` maps names → file bands per sensor. |
+| **Bands** | Training fed **file order** of the training imagery, which is **Blue, Green, Red**. All Vantor `_RGB` products we have also store **B,G,R** (confirmed by Erik), so the original pipeline always fed B,G,R. | `configs/models.yaml` declares `input_bands: [blue, green, red]`; `configs/sensors.yaml` maps names → file bands per sensor (`vantor` = B,G,R → file bands 1,2,3). |
 | **Normalization** | Per-channel z-score `(x − mean)/(std + 1e-8)`. Training: per training area, plus per-patch 40% of the time. Inference: **per 256×256 tile, per channel.** | Same, per tile. Optionally excludes nodata from the stats (`mask_nodata`, default on). |
 | **Bit depth** | Training imagery is **uint8**. | Optional scene-level 2–98% stretch to 0–255 (`rescale: percentile`). Tested: **no benefit** on sample 14494 (Section 8.1). Default off. |
 | **GSD** | Training imagery **0.324 m**. | `target_gsd_m` resamples on the fly (bilinear). **Matching 0.324 m matters a lot** (Section 8.1). |
@@ -111,12 +111,12 @@ Reconstructed from the original code (`oldcore/` is what training imported), the
 | | SkySat test scene | Vantor test scene | Vantor validation clips | Training imagery |
 |---|---|---|---|---|
 | dtype | uint16 | uint16 | uint16 | uint8 |
-| Bands in file | **B, G, R, NIR** | **R, G, B** | **R, G, B** | **B, G, R** |
+| Bands in file | **B, G, R, NIR** (to confirm) | **B, G, R** | **B, G, R** | **B, G, R** |
 | GSD | 0.5 m | 0.25 m | 0.5 m | 0.324 m |
 | `--sensor` | `skysat` | `vantor` | `vantor` | `worldview_2014_training` |
 | Crater (9.4 m) in pixels | 19 px | 38 px | 19 px | 29 px |
 
-⚠️ Don't trust colour-interpretation tags in these files. Band orders above were confirmed by eye with true-colour quicklooks.
+⚠️ Don't trust colour-interpretation tags in these files, and don't judge band order by eye on **raw 16-bit** data. Raw DN is naturally highest in blue, so a *correctly* ordered raw image looks bluish and a swapped one can look 'natural'. That misled the first check of the Vantor files (corrected 2026-10-02 by Erik: they are B,G,R). Quicklooks now use the sensor band map plus a per-band stretch (`scripts/quicklook.py --sensor vantor`) to show true colour.
 
 ---
 
@@ -212,19 +212,19 @@ AOI 1 km². GT = 559 craters. Original `_detected_craters` in the AOI = 989, a *
 | Run | GSD | Bands fed | n | vs. original (P / R) | vs. GT P | vs. GT R | vs. GT F1 |
 |---|---|---|---|---|---|---|---|
 | **ORIGINAL (22JUN13 detections)** | full-res strips | ? | **520** | n/a | **0.51** | **0.47** | **0.49** |
-| parity, file order (R,G,B) | 0.5 | 1,2,3 | 143 | 0.55 / 0.15 | 0.77 | 0.20 | 0.31 |
-| parity, B,G,R | 0.5 | 3,2,1 | 210 | 0.44 / 0.18 | 0.64 | 0.24 | 0.35 |
-| parity, R,G,B | 0.324 | 1,2,3 | 340 | 0.49 / 0.32 | 0.66 | 0.40 | 0.50 |
-| **parity, B,G,R** | **0.324** | **3,2,1** | **533** | 0.36 / 0.37 | 0.49 | **0.47** | **0.48** |
-| parity, B,G,R + 8-bit stretch | 0.324 | 3,2,1 | 401 | 0.44 / 0.34 | 0.58 | 0.42 | 0.49 |
-| parity, R,G,B + 8-bit stretch | 0.324 | 1,2,3 | 295 | 0.52 / 0.30 | 0.73 | 0.38 | 0.50 |
-| default (stride 192, center-keep, nodata masked), B,G,R | 0.324 | 3,2,1 | 412 | n/a | 0.58 | 0.43 | 0.49 |
+| parity, file order = **B,G,R (native)** | 0.5 | 1,2,3 | 143 | 0.55 / 0.15 | 0.77 | 0.20 | 0.31 |
+| parity, reversed = R,G,B | 0.5 | 3,2,1 | 210 | 0.44 / 0.18 | 0.64 | 0.24 | 0.35 |
+| **parity, B,G,R (native)** | **0.324** | **1,2,3** | 340 | 0.49 / 0.32 | 0.66 | 0.40 | 0.50 |
+| parity, reversed = R,G,B | 0.324 | 3,2,1 | **533** | 0.36 / 0.37 | 0.49 | **0.47** | **0.48** |
+| parity, R,G,B + 8-bit stretch | 0.324 | 3,2,1 | 401 | 0.44 / 0.34 | 0.58 | 0.42 | 0.49 |
+| parity, B,G,R + 8-bit stretch | 0.324 | 1,2,3 | 295 | 0.52 / 0.30 | 0.73 | 0.38 | 0.50 |
+| default (stride 192, center-keep, nodata masked), R,G,B | 0.324 | 3,2,1 | 412 | n/a | 0.58 | 0.43 | 0.49 |
 
 **Conclusions**
 1. **Resolution is the dominant factor.** At 0.5 m the model misses most craters (R≈0.2). Resampling to the 0.324 m training GSD more than doubles recall.
-2. **At 0.324 m with B,G,R, our pipeline matches the original run's numbers:** 533 vs. 520 detections, the same median size (61 vs. 64 m²), and the same accuracy vs. GT (F1 0.48 vs. 0.49). So results are **not "very different."**
+2. **At 0.324 m our pipeline matches the original run's numbers** (closest count with the reversed order, closest accuracy with either): 533 vs. 520 detections, the same median size (61 vs. 64 m²), and the same accuracy vs. GT (F1 0.48 vs. 0.49). So results are **not "very different."**
 3. **Individual polygons only partly coincide** (~37% one-to-one) because (a) the original ran on the full-resolution source strips, not these resampled 0.5 m clips, and (b) the model is very sensitive to tile placement (~60% agreement between two tilings of the *same* input). Exact polygon parity would require the original source scenes (Q10).
-4. R,G,B vs. B,G,R: similar F1. B,G,R (native) gives higher recall and lower precision. 8-bit stretching gave no clear gain.
+4. B,G,R (native) vs. R,G,B: similar F1. Native B,G,R gives higher precision, reversed R,G,B higher recall. 8-bit stretching gave no clear gain. *(Labels corrected 2026-10-02: originally reported with the band names swapped.)*
 5. Georegistration: detections (ours and original) sit within ~2 m of GT on 22JUN13. The 22JUN09 clip is offset ~6 m from GT, which hurts its scores (it's also listed in `raster_errors.txt`).
 
 *Caveat: this is one sample. Results must be confirmed on all 15 Strata-4 samples.*
@@ -240,7 +240,7 @@ The full scene would take more than a day on the 2-core dev container, so four 1
 | w3_medium | 435373, 5369041 | 99 | 11.2 m | Fields + rough grassland + bright chalky ground |
 | w4_sparse | 424373, 5372041 | 20 | 12.4 m | Fields, few craters |
 
-**Results (0.324 m, B,G,R; no masking, no min-area):**
+**Results (0.324 m, bands fed reversed = R,G,B, from before the band-order correction; no masking, no min-area):**
 
 | Window | Pred | P | R | F1 |
 |---|---|---|---|---|
@@ -255,18 +255,18 @@ The full scene would take more than a day on the 2-core dev container, so four 1
 
 | Setting | w1 + w3: P / R / F1 | w2 (small craters): P / R / F1 |
 |---|---|---|
-| 0.324 m, B,G,R | 0.61 / 0.81 / **0.70** | 0.35 / 0.15 / 0.21 |
-| 0.324 m, R,G,B | 0.66 / 0.77 / **0.71** | not run |
-| native 0.25 m, B,G,R | 0.52 / 0.84 / 0.64 | 0.37 / **0.33** / **0.34** |
+| 0.324 m, reversed R,G,B | 0.61 / 0.81 / **0.70** | 0.35 / 0.15 / 0.21 |
+| **0.324 m, native B,G,R (now the default)** | 0.66 / 0.77 / **0.71** | not run |
+| native 0.25 m, reversed R,G,B | 0.52 / 0.84 / 0.64 | 0.37 / **0.33** / **0.34** |
 
-**Recall by GT diameter (0.324 m, B,G,R, all 4 windows):** < 5 m: 0.06 · 5–8 m: 0.45 · 8–12 m: 0.81 · 12–16 m: 0.82 · > 16 m: 0.69
+**Recall by GT diameter (0.324 m, reversed R,G,B, all 4 windows):** < 5 m: 0.06 · 5–8 m: 0.45 · 8–12 m: 0.81 · 12–16 m: 0.82 · > 16 m: 0.69
 
 **Conclusions**
 1. **On full-resolution imagery the model works well for craters ≥ 8 m:** recall ≈ 0.8 in crater fields, F1 ≈ 0.7 where the land is mostly cultivated.
 2. **Small craters (< 5–8 m) are largely missed.** They're rare in the training labels (5th percentile 4.8 m). Running at native 0.25 m doubles small-crater recall but adds many false positives elsewhere. A size-aware setup (e.g. combining both resolutions) is worth testing; retraining with small craters would be the real fix.
 3. **False positives cluster in woodland, on building roofs, and in rough grassland / bright chalky bare ground.** Woodland and roofs are clear errors that masking would remove (Q9). Many detections in the rough grassland look like pale circular disturbances very similar to labelled craters, so **some may be unlabelled craters** (Q12). Precision may be understated there.
-4. **B,G,R vs. R,G,B is close to a wash** (F1 0.70 vs. 0.71). B,G,R gives more recall, R,G,B more precision. Not decisive; revisit with ensembling.
-5. A **min-area filter of ~30 m²** (≈ 6 m diameter) raises precision by ~0.08 at a recall cost of ~0.015. Its value depends on whether small craters matter (Q7).
+4. **Band order is close to a wash** (native B,G,R F1 0.71 vs. reversed R,G,B 0.70). Native gives more precision, reversed more recall. We use the native B,G,R, matching training and the original pipeline.
+5. A **min-area filter of ~30 m²** (≈ 6 m diameter) raises precision by ~0.08 at a recall cost of ~0.015. **Adopted: 25 m² default** (Q7).
 6. Compared with the 0.5 m validation clips (Section 8.1, F1 ≈ 0.49), full-resolution input is clearly better. **Production should use full-resolution imagery, not resampled clips.**
 
 ### 8.3 Planned evaluation
@@ -295,13 +295,13 @@ The full scene would take more than a day on the 2-core dev container, so four 1
 | Q4 | Which SkySat / Vantor product types will we receive in production? Are they always like the test scenes? | Erik | Open |
 | Q5 | S3 bucket: name, region, owner, read-only or read/write? | Erik | Open |
 | Q6 | Azure subscription / resource group / region for the VM | Erik | Open |
-| Q7 | Minimum crater size worth reporting (for `min_area_m2`) | Erik | Open (training 5th percentile ≈ 18 m² / 4.8 m diameter) |
+| Q7 | Minimum crater size worth reporting (for `min_area_m2`) | Erik | ✅ **25 m²** (≈ 5.6 m diameter), now the default |
 | Q8 | Output format: shapefile + GeoPackage OK? Required attribute fields? | Erik | Open |
-| Q9 | Forest/urban masking: which masks were used for the validation detections, and should the repo apply them? | Erik | Open |
+| Q9 | Forest/urban masking: which masks were used for the validation detections, and should the repo apply them? | Erik | 🟡 Erik has a **field-boundary layer** to clip detections to fields. Whether to apply it is up to the **end user**. Plan: optional `--clip-to` step. |
 | Q10 | Are the original full-resolution 22JUN13/22JUN09 source strips available (for exact parity)? Not essential. | Erik | Open |
 | Q11 | When will the SkySat model be available, and what was it trained on (GSD, bands, bit depth)? | Erik | Open |
-| Q12 | Was GT_2 `Craters.shp` labelled **exhaustively** across the whole P001/P007 scenes, or only in some land types/areas (e.g. cultivated fields)? Affects how to read precision. | Erik | Open |
-| Q13 | Run the full P001 scene: on a bigger machine (Erik's workstation or a trial VM)? ~78k tiles at 0.324 m (≈ 3.5 h on 16 cores, ≈ 28 h on 2). | Erik | Open |
+| Q12 | Was GT_2 `Craters.shp` labelled **exhaustively** across the whole P001/P007 scenes, or only in some land types/areas (e.g. cultivated fields)? Affects how to read precision. | Erik | ✅ GT is likely **incomplete** (misses a fair number of craters). Treat precision as a lower bound; don't over-tune for it. |
+| Q13 | Run the full P001 scene: on a bigger machine (Erik's workstation or a trial VM)? ~78k tiles at 0.324 m (≈ 3.5 h on 16 cores, ≈ 28 h on 2). | Erik | ✅ Run on **Erik's workstation GPU** via `scripts/windows/` (TF 2.10.1 GPU env), then develop the VM. |
 
 ---
 
@@ -311,8 +311,11 @@ The full scene would take more than a day on the 2-core dev container, so four 1
 
 | Date | Decision | Why |
 |---|---|---|
-| 2026-10-02 | Keep **0.324 m** as the working default for the Vantor model. Band order stays B,G,R for now, but R,G,B is statistically equivalent; decide after ensembling. | GT_2 windows: 0.324 m beats native 0.25 m on F1 (0.70 vs 0.64) except for very small craters. |
-| 2026-10-02 | The Vantor model is fed **B,G,R** (training file order) by default, mapped by band name per sensor. | Training imagery stores B,G,R and training fed file order. Confirmed visually. |
+| 2026-10-02 | Use Erik's Windows workstation GPU for full-scene runs during development: conda env `halo-gpu` with TF 2.10.1 (last native-Windows GPU release), double-click scripts in `scripts/windows/`, logs in `_scratch/`. TF made an install extra (`[cpu]` / `[gpu]`). | Full P001 is ~78k tiles: too slow on 2 cores. Erik's GPU is available now; the VM comes after. |
+| 2026-10-02 | **Min-area default 25 m².** Field-boundary clipping optional, pending the end user. | Erik. Raises precision at little recall cost. |
+| 2026-10-02 | Vantor sensor map corrected to **B,G,R** (file bands 1,2,3); quicklooks show true colour (R,G,B display, per-band stretch). | Erik confirmed the files are B,G,R. The earlier visual check was misled by raw 16-bit colour. |
+| 2026-10-02 | Keep **0.324 m** as the working default for the Vantor model. Feed native B,G,R; reversed order is statistically equivalent. | GT_2 windows: 0.324 m beats native 0.25 m on F1 (0.70 vs 0.64) except for very small craters. |
+| 2026-10-02 | The Vantor model is fed **B,G,R** (training file order) by default, mapped by band name per sensor. | Training imagery stores B,G,R and training fed file order. |
 | 2026-10-02 | Resample inputs to the model's **native 0.324 m** (`--target-gsd 0.324`). To become the per-model default after multi-sample confirmation. | Recall roughly doubles vs. 0.5 m on sample 14494, matching the original run's accuracy. |
 | 2026-10-02 | Phase 1 parity accepted at the **aggregate** level (count, size, accuracy vs. GT), not polygon-for-polygon. | Original inputs aren't available here, and the model is tile-placement sensitive (Section 8.1). |
 | 2026-10-02 | Next priority: **test-time ensembling** (multiple tile offsets + flips, averaged probabilities). | Removes the tile-placement instability. Likely improves accuracy. |
@@ -332,13 +335,14 @@ The full scene would take more than a day on the 2-core dev container, so four 1
 
 | Date | Scene(s) | Sensor | Model | Config / commit | Result / notes |
 |---|---|---|---|---|---|
-| 2026-10-02 | GT_2 P001, 4 × 1 km² windows | vantor | vantor_2022 | 0.324 m B,G,R (all); native 0.25 m (w1–w3); 0.324 m R,G,B (w1, w3); v0.1.0 | Pooled F1 0.60 (w1 0.72). Small craters missed. FPs in woodland/roofs/rough ground (Section 8.2). ~3 min per window at 0.324 m on 2 cores. |
-| 2026-10-02 | Strata 4 / sample_14494, 22JUN13 + 22JUN09 clips | vantor | vantor_2022 | 9 variants (Section 8.1), v0.1.0 | Best: 0.324 m, B,G,R → 533 craters, F1 vs GT 0.48 (original 0.49). Dev container, 2 cores: ~1–2 min per variant. |
+| 2026-10-02 | GT_2 P001, 4 × 1 km² windows | vantor | vantor_2022 | 0.324 m reversed R,G,B (all); native 0.25 m reversed (w1–w3); 0.324 m native B,G,R (w1, w3); v0.1.0 | Pooled F1 0.60 (w1 0.72). Small craters missed. FPs in woodland/roofs/rough ground (Section 8.2). ~3 min per window at 0.324 m on 2 cores. |
+| 2026-10-02 | Strata 4 / sample_14494, 22JUN13 + 22JUN09 clips | vantor | vantor_2022 | 9 variants (Section 8.1), v0.1.0 | Best: 0.324 m → 533 (reversed) / 340 (native) craters, F1 vs GT 0.48 / 0.50 (original 0.49). Dev container, 2 cores: ~1–2 min per variant. |
 
 ---
 
 ## 12. Changelog
 
+- **2026-10-02 (d):** Band-order correction (Vantor files are B,G,R; result tables relabelled). Min-area default 25 m². GPU-ready: TF install extras, `--log-file`, periodic progress logging, BigTIFF-safe outputs, Windows GPU scripts + `docs/windows_gpu.md`. Answered Q7, Q12, Q13; updated Q9.
 - **2026-10-02 (c):** GT_2 full-resolution evaluation (Section 8.2). Added `scripts/evaluate_windows.py` and `scripts/quicklook.py`. Added Q12, Q13.
 - **2026-10-02 (b):** Phase 1. Built the `halo_craters` package and CLI. Verified the training imagery spec (uint8, B,G,R, 0.324 m), sensor band orders and crater size distribution. Ran the parity investigation on sample 14494. Answered Q1–Q3, added Q9–Q11.
 - **2026-10-02 (a):** Document created. Training spec reconstructed from `Base_Unet_Notebook` code and `.h5` metadata.

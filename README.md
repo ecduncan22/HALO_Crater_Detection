@@ -9,15 +9,18 @@ See **[MASTER_PROJECT.md](MASTER_PROJECT.md)** for the project plan, model speci
 
 ## Install
 
-Python 3.10 or 3.11 (TensorFlow 2.15 is required to load the Keras-2 `.h5` models).
+Python 3.10 or 3.11. TensorFlow must be Keras 2 (≤ 2.15) to load the `.h5` models, and is chosen per machine:
 
 ```bash
 git clone https://github.com/ecduncan22/HALO_Crater_Detection.git
 cd HALO_Crater_Detection
 python3.11 -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+pip install -e ".[cpu,dev]"     # CPU (Linux / Windows)
+# pip install -e ".[gpu,dev]"   # NVIDIA GPU on Linux / WSL2 / Azure GPU VM
 pytest -q
 ```
+
+Windows workstation with an NVIDIA GPU: see [docs/windows_gpu.md](docs/windows_gpu.md) (double-click setup + run scripts).
 
 Put the model weights in `models/` (not in git). The paths and checksums are listed in `configs/models.yaml`.
 
@@ -26,6 +29,7 @@ Put the model weights in `models/` (not in git). The paths and checksums are lis
 ```bash
 # one scene (or a directory of .tif files)
 halo-craters run /path/to/scene.tif --sensor vantor --model vantor_2022 --target-gsd 0.324 --out outputs/
+#   (drops craters < 25 m2 by default; change with --min-area)
 
 # SkySat scene with the Vantor model
 halo-craters run /path/to/skysat.tif --sensor skysat --model vantor_2022 --target-gsd 0.324 --out outputs/
@@ -36,7 +40,7 @@ halo-craters evaluate outputs/<scene>/<scene>_craters.gpkg reference.shp --aoi a
 
 Each scene gets `outputs/<scene>/` with `*_craters.gpkg`, `*_craters.shp`, `*_prob.tif` (uint8 probability, Cloud-Optimized GeoTIFF) and `run.json` (config, model, commit, timings).
 
-Useful options: `--bands 3,2,1` (override band order), `--stride`, `--threshold`, `--min-area`, `--rescale percentile`, `--parity` (reproduce the original notebook's tiling), `--tag` (keep experiment outputs apart). Sensor band layouts live in `configs/sensors.yaml`; run defaults are in `configs/default.yaml`.
+Useful options: `--batch-size 32` (GPU), `--log-file run.log`, `--bands 3,2,1` (override band order), `--stride`, `--threshold`, `--min-area`, `--rescale percentile`, `--parity` (reproduce the original notebook's tiling), `--tag` (keep experiment outputs apart). Sensor band layouts live in `configs/sensors.yaml`; run defaults are in `configs/default.yaml`.
 
 ## Repository rules
 

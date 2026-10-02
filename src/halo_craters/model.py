@@ -35,6 +35,13 @@ def load_model(path: str | Path, expected_sha256: str | None = None, verify: boo
         actual = sha256sum(path)
         if actual != expected_sha256:
             log.warning("Model checksum mismatch for %s: %s != %s", path, actual, expected_sha256)
+    gpus = tf.config.list_physical_devices("GPU")
+    for g in gpus:
+        try:
+            tf.config.experimental.set_memory_growth(g, True)
+        except RuntimeError:
+            pass
+    log.info("TensorFlow %s, GPUs: %s", tf.__version__, [g.name for g in gpus] or "none (CPU)")
     model = tf.keras.models.load_model(str(path), compile=False)
     log.info("Loaded model %s: input %s -> output %s", path.name, model.input_shape, model.output_shape)
     return model

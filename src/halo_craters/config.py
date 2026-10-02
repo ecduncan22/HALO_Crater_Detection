@@ -21,7 +21,7 @@ class RunConfig:
     rescale: str = "none"             # "none" | "percentile" (scene-level 2-98% stretch to 0-255)
     batch_size: int = 8
     threshold: float = 0.5
-    min_area_m2: float = 0.0
+    min_area_m2: float = 25.0
     polygon_strip_rows: int = 4096
     polygon_strip_overlap: int = 512
     write_probability: bool = True

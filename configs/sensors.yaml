@@ -1,13 +1,14 @@
 # Sensor / product band layouts: band name -> 1-based band index in the file.
-# Verified visually with true-colour quicklooks (2026-10-02). Do not trust the
-# files' own colour-interpretation tags: the SkySat file claims R,G,B but is B,G,R.
+# Do not trust the files' own colour-interpretation tags, and be careful judging band
+# order by eye on raw 16-bit data: raw DN is naturally highest in blue, so a correctly
+# ordered raw image looks bluish. Vantor order confirmed by Erik (2026-10-02).
 
-skysat:                 # Planet SkySat pansharpened, 4-band uint16, 0.5 m
+skysat:                 # Planet SkySat pansharpened, 4-band uint16, 0.5 m (Planet order B,G,R,NIR; to confirm)
   bands: {blue: 1, green: 2, red: 3, nir: 4}
   nodata: 0
 
-vantor:                 # Vantor pansharpened "_RGB" products, 3-band uint16 (0.25-0.5 m)
-  bands: {red: 1, green: 2, blue: 3}
+vantor:                 # Vantor pansharpened "_RGB" products, 3-band uint16 (0.25-0.5 m).
+  bands: {blue: 1, green: 2, red: 3}   # despite the "_RGB" name, files store B,G,R (same as training)
   nodata: 0
 
 vantor_4band:           # Vantor/Maxar standard 4-band order

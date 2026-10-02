@@ -21,6 +21,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="halo-craters", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("-v", "--verbose", action="store_true")
+    ap.add_argument("--log-file", help="also write log messages to this file")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     r = sub.add_parser("run", help="detect craters in a .tif or a directory of .tif files")
@@ -52,6 +53,10 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if a.verbose else logging.INFO,
                         format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    if a.log_file:
+        fh = logging.FileHandler(a.log_file, mode="a", encoding="utf-8")
+        fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        logging.getLogger().addHandler(fh)
     for noisy in ("botocore", "boto3", "rasterio", "pyogrio", "fiona"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 

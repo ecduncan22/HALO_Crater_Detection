@@ -10,6 +10,7 @@ import contextlib
 import logging
 import math
 import os
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -85,9 +86,13 @@ def run_inference(
                  Path(image_path).name, W, H, src.count, bands, n_total, cfg.stride)
 
         profile = dict(driver="GTiff", dtype="uint8", count=1, width=W, height=H,
-                       crs=src.crs, transform=src.transform, nodata=None)
+                       crs=src.crs, transform=src.transform, nodata=None, BIGTIFF="IF_SAFER")
         skipped = 0
-        pbar = tqdm(total=n_total, disable=not progress, unit="tile", desc=Path(image_path).stem[:30])
+        # Interactive progress bar in a terminal; periodic log lines otherwise (log files, schedulers).
+        pbar = tqdm(total=n_total, disable=not (progress and sys.stderr.isatty()), unit="tile",
+                    desc=Path(image_path).stem[:30])
+        t_last = time.time()
+        done = 0
         with rasterio.open(tmp_path, "w", **profile) as dst:
             for r, (k0, k1) in zip(rows, row_keep):
                 h = min(T, H - r)
@@ -101,6 +106,7 @@ def run_inference(
                     valid = valid_mask(tile, nodata)      # all True if nodata is None
                     if not valid.any():                   # tile entirely outside the scene
                         skipped += 1
+                        done += 1
                         pbar.update(1)
                         continue
                     if lohi is not None:
@@ -115,16 +121,24 @@ def run_inference(
                     if len(batch) == cfg.batch_size:
                         _flush(model, batch, places, r, k0, k1, out_strip, cfg)
                         pbar.update(len(batch))
+                        done += len(batch)
                         batch, places = [], []
                 if batch:
                     _flush(model, batch, places, r, k0, k1, out_strip, cfg)
                     pbar.update(len(batch))
+                    done += len(batch)
                 dst.write(out_strip, 1, window=Window(0, k0, W, k1 - k0))
+                if progress and time.time() - t_last > 30:
+                    rate = done / max(time.time() - t0, 1e-6)
+                    eta = (n_total - done) / rate if rate > 0 else float("nan")
+                    log.info("progress %d/%d tiles (%.1f%%), %.1f tiles/s, ETA %.0f min",
+                             done, n_total, 100 * done / n_total, rate, eta / 60)
+                    t_last = time.time()
         pbar.close()
         gsd = abs(src.res[0])
 
     # Re-write as a compressed Cloud-Optimized GeoTIFF (fast to view, small on disk).
-    rio_copy(tmp_path, out_path, driver="COG", compress="DEFLATE", overview_resampling="average")
+    rio_copy(tmp_path, out_path, driver="COG", compress="DEFLATE", overview_resampling="average", BIGTIFF="IF_SAFER")
     os.remove(tmp_path)
     secs = time.time() - t0
     log.info("Inference done in %.1f s (%d tiles, %d empty skipped)", secs, n_total, skipped)

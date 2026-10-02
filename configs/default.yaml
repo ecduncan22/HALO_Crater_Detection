@@ -6,9 +6,9 @@ edge_mode: shift        # shift: last tile aligned to the image edge | pad: zero
 mask_nodata: true       # exclude nodata pixels from per-tile mean/std (original notebook: false)
 rescale: none           # none | percentile: scene-level 2-98% stretch to 0-255 (8-bit-like)
 target_gsd_m: null      # resample input to this pixel size before inference (null = native)
-batch_size: 8
+batch_size: 8           # raise to 32-64 on a GPU
 threshold: 0.5          # probability threshold for crater pixels
-min_area_m2: 0.0        # drop polygons smaller than this
+min_area_m2: 25.0       # drop polygons smaller than this (agreed with Erik 2026-10-02)
 polygon_strip_rows: 4096   # rows per strip when polygonizing large scenes
 polygon_strip_overlap: 512 # must exceed the largest crater (pixels)
 write_probability: true # keep the probability GeoTIFF (uint8, 0-255)

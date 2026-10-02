@@ -6,9 +6,13 @@ build-backend = "setuptools.build_meta"
 name = "halo-craters"
 version = "0.1.0"
 description = "Crater detection on VHR (SkySat, Vantor) imagery with trained U-Net models"
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.9,<3.12"
+# TensorFlow is installed via an extra, because the right build depends on the machine:
+#   pip install -e ".[cpu]"   Linux/Windows CPU          (tensorflow-cpu 2.15.1)
+#   pip install -e ".[gpu]"   Linux / WSL2 NVIDIA GPU    (tensorflow[and-cuda] 2.15.1)
+#   Windows native GPU: TensorFlow 2.10.1 + CUDA 11.2 / cuDNN 8.1 (see docs/windows_gpu.md)
+# All must be Keras 2 (TF <= 2.15) to load the legacy Keras-2.4 .h5 models.
 dependencies = [
-    "tensorflow-cpu==2.15.1",   # Keras 2: loads the legacy Keras-2.4 .h5 models
     "numpy<2",
     "rasterio>=1.3",
     "geopandas>=0.14",
@@ -20,6 +24,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+cpu = ["tensorflow-cpu==2.15.1"]
+gpu = ["tensorflow[and-cuda]==2.15.1"]
 s3 = ["boto3"]
 dev = ["pytest"]
 
