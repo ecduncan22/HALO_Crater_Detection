@@ -1,0 +1,47 @@
+# --- Data, models, outputs (never commit) ---
+data/
+models/
+outputs/
+*.tif
+*.tiff
+*.TIF
+*.jp2
+*.ntf
+*.h5
+*.hdf5
+*.onnx
+*.keras
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.gpkg
+*.vrt
+*.ovr
+*.aux.xml
+
+# --- Credentials ---
+.env
+.aws/
+*.pem
+*credentials*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+build/
+dist/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
